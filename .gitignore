@@ -18,9 +18,9 @@ build/
 .env.local
 *.local
 
-# Database
-*.db
-*.sqlite3
+# Database - INCLUDED for demo purposes
+# *.db
+# *.sqlite3
 
 # Node.js
 node_modules/
