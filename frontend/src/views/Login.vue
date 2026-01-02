@@ -62,8 +62,10 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { authApi } from '../services/api'
+import { useUserStore } from '../stores/userStore'
 
 const router = useRouter()
+const { setUser } = useUserStore()
 
 const username = ref('')
 const password = ref('')
@@ -93,9 +95,8 @@ const handleLogin = async () => {
     const response = await authApi.login(username.value, password.value)
     const { access_token, user } = response.data
 
-    // Store token and user info
-    localStorage.setItem('token', access_token)
-    localStorage.setItem('user', JSON.stringify(user))
+    // Store token and user info in reactive store
+    setUser(user, access_token)
 
     // Role-based redirect
     const landingPage = getRoleLandingPage(user.role)

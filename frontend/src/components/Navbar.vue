@@ -25,27 +25,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useUserStore } from '../stores/userStore'
 
 const route = useRoute()
+const { userDisplayRole, userInitial } = useUserStore()
+
 const currentTime = ref('')
-
-// Get user from localStorage
-const user = computed(() => JSON.parse(localStorage.getItem('user') || '{}'))
-const userRole = computed(() => user.value.role || 'GUEST')
-const userInitial = computed(() => (user.value.username || 'G')[0].toUpperCase())
-
-// Display role mapping
-const userDisplayRole = computed(() => {
-  const roleNames = {
-    'ADMIN': 'Administrator',
-    'MANAGER': 'Manager',
-    'OPERATOR': 'Plant Operator',
-    'VIEWER': 'Viewer'
-  }
-  return roleNames[userRole.value] || 'Guest'
-})
 
 const pageTitle = computed(() => {
   const titles = {

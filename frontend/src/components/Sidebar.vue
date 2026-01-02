@@ -234,17 +234,14 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { authApi } from '../services/api'
+import { useRouter } from 'vue-router'
+import { useUserStore } from '../stores/userStore'
 
-const user = computed(() => JSON.parse(localStorage.getItem('user') || '{}'))
-const userName = computed(() => user.value.full_name || user.value.username || 'User')
-const userRole = computed(() => user.value.role || 'OPERATOR')
-const userInitial = computed(() => (user.value.username || 'U')[0].toUpperCase())
-const isAdmin = computed(() => user.value.role === 'ADMIN')
-const canAccessReports = computed(() => ['ADMIN', 'MANAGER'].includes(user.value.role))
+const router = useRouter()
+const { userName, userRole, userInitial, isAdmin, canAccessReports, clearUser } = useUserStore()
 
 const logout = () => {
-  authApi.logout()
+  clearUser()
+  router.push('/login')
 }
 </script>
