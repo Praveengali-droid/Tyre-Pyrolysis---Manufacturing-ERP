@@ -74,7 +74,11 @@ def seed_admin_user():
         # Check if any user exists
         user_count = db.query(User).count()
         if user_count == 0:
-            print("🔐 No users found. Creating default admin user...")
+            # First seed demo data (vendors, batches, sales)
+            seed_demo_data()
+            
+            # Then create admin user (after demo data, so it's not wiped)
+            print("🔐 Creating default admin user...")
             admin = User(
                 username="admin",
                 email="admin@erp.local",
@@ -86,13 +90,12 @@ def seed_admin_user():
             db.add(admin)
             db.commit()
             print("✅ Default admin user created: admin / admin123")
-            
-            # Also seed demo data for fresh deployments
-            seed_demo_data()
         else:
             print(f"👥 Found {user_count} existing user(s)")
     except Exception as e:
         print(f"⚠️ Error seeding admin user: {e}")
+        import traceback
+        traceback.print_exc()
     finally:
         db.close()
 
@@ -112,7 +115,7 @@ def seed_demo_data():
         
         if os.path.exists(script_path):
             result = subprocess.run(
-                ["python", script_path, "--wipe"],
+                ["python", script_path],  # No --wipe flag
                 cwd=backend_dir,
                 capture_output=True,
                 text=True
