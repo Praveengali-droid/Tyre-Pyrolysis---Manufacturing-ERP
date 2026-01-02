@@ -52,6 +52,79 @@ def init_db():
     from models import quotation
     from models import dispatch
     from models import sales_return
+    from models import user, maintenance, system_settings
     
     Base.metadata.create_all(bind=engine)
     print("✅ Database tables created successfully!")
+    
+    # Seed admin user if no users exist
+    seed_admin_user()
+
+
+def seed_admin_user():
+    """
+    Create default admin user if no users exist.
+    Called on application startup for fresh deployments.
+    """
+    from models.user import User
+    from auth.security import get_password_hash
+    
+    db = SessionLocal()
+    try:
+        # Check if any user exists
+        user_count = db.query(User).count()
+        if user_count == 0:
+            print("🔐 No users found. Creating default admin user...")
+            admin = User(
+                username="admin",
+                email="admin@erp.local",
+                password_hash=get_password_hash("admin123"),
+                full_name="System Administrator",
+                role="ADMIN",
+                is_active=True
+            )
+            db.add(admin)
+            db.commit()
+            print("✅ Default admin user created: admin / admin123")
+            
+            # Also seed demo data for fresh deployments
+            seed_demo_data()
+        else:
+            print(f"👥 Found {user_count} existing user(s)")
+    except Exception as e:
+        print(f"⚠️ Error seeding admin user: {e}")
+    finally:
+        db.close()
+
+
+def seed_demo_data():
+    """
+    Seed comprehensive demo data for fresh deployments.
+    Creates vendors, batches, sales for reports to work.
+    """
+    print("🌱 Seeding demo data for reports...")
+    try:
+        # Run the seed script
+        import subprocess
+        import os
+        backend_dir = os.path.dirname(os.path.abspath(__file__))
+        script_path = os.path.join(backend_dir, "scripts", "seed_realism.py")
+        
+        if os.path.exists(script_path):
+            result = subprocess.run(
+                ["python", script_path, "--wipe"],
+                cwd=backend_dir,
+                capture_output=True,
+                text=True
+            )
+            if result.returncode == 0:
+                print("✅ Demo data seeded successfully!")
+                print(result.stdout[-500:] if len(result.stdout) > 500 else result.stdout)
+            else:
+                print(f"⚠️ Seed script returned error: {result.stderr[:500]}")
+        else:
+            print(f"⚠️ Seed script not found at {script_path}")
+    except Exception as e:
+        print(f"⚠️ Error running seed script: {e}")
+
+
