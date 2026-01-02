@@ -74,11 +74,7 @@ def seed_admin_user():
         # Check if any user exists
         user_count = db.query(User).count()
         if user_count == 0:
-            # First seed demo data (vendors, batches, sales)
-            seed_demo_data()
-            
-            # Then create admin user (after demo data, so it's not wiped)
-            print("🔐 Creating default admin user...")
+            print("🔐 No users found. Creating default admin user...")
             admin = User(
                 username="admin",
                 email="admin@erp.local",
@@ -90,44 +86,86 @@ def seed_admin_user():
             db.add(admin)
             db.commit()
             print("✅ Default admin user created: admin / admin123")
+            
+            # Seed basic demo data inline
+            seed_basic_demo_data(db)
         else:
             print(f"👥 Found {user_count} existing user(s)")
     except Exception as e:
-        print(f"⚠️ Error seeding admin user: {e}")
+        print(f"⚠️ Error seeding: {e}")
         import traceback
         traceback.print_exc()
     finally:
         db.close()
 
 
-def seed_demo_data():
+def seed_basic_demo_data(db):
     """
-    Seed comprehensive demo data for fresh deployments.
-    Creates vendors, batches, sales for reports to work.
+    Seed minimal demo data inline (no subprocess) for reports to show something.
     """
-    print("🌱 Seeding demo data for reports...")
+    from models.vendor import Vendor
+    from models.customer import Customer
+    from models.product import Product
+    from models.reactor import Reactor
+    from models.storage_tank import StorageTank
+    from decimal import Decimal
+    
+    print("🌱 Seeding basic demo data...")
+    
     try:
-        # Run the seed script
-        import subprocess
-        import os
-        backend_dir = os.path.dirname(os.path.abspath(__file__))
-        script_path = os.path.join(backend_dir, "scripts", "seed_realism.py")
+        # Vendors
+        vendors = [
+            Vendor(vendor_code="V-PREM-001", name="ShreeSai Rubber Industries", vendor_type="SUPPLIER", 
+                   city="Hyderabad", state="Andhra Pradesh", country="India", 
+                   gst_number="37AADCS1234A1Z5", is_epr_compliant=True, is_active=True),
+            Vendor(vendor_code="V-BUDG-001", name="Bharat Scrap Traders", vendor_type="SUPPLIER",
+                   city="Vijayawada", state="Andhra Pradesh", country="India",
+                   gst_number="37AADBS5678B1Z3", is_epr_compliant=True, is_active=True),
+        ]
+        for v in vendors:
+            db.add(v)
         
-        if os.path.exists(script_path):
-            result = subprocess.run(
-                ["python", script_path],  # No --wipe flag
-                cwd=backend_dir,
-                capture_output=True,
-                text=True
-            )
-            if result.returncode == 0:
-                print("✅ Demo data seeded successfully!")
-                print(result.stdout[-500:] if len(result.stdout) > 500 else result.stdout)
-            else:
-                print(f"⚠️ Seed script returned error: {result.stderr[:500]}")
-        else:
-            print(f"⚠️ Seed script not found at {script_path}")
+        # Customers
+        customers = [
+            Customer(customer_code="CUST-001", name="Mahalakshmi Oils Pvt Ltd", customer_type="ALL",
+                     city="Guntur", state="Andhra Pradesh", gst_number="37AADCM9012C1Z1",
+                     credit_limit=500000, payment_terms_days=30, is_active=True),
+            Customer(customer_code="CUST-002", name="Andhra Industries", customer_type="ALL",
+                     city="Vijayawada", state="Andhra Pradesh", gst_number="37AADAI3456D1Z9",
+                     credit_limit=300000, payment_terms_days=30, is_active=True),
+        ]
+        for c in customers:
+            db.add(c)
+        
+        # Products
+        products = [
+            Product(product_code="PRD-OIL-001", name="Pyrolysis Oil (TFO)", product_type="OIL",
+                    unit="LITERS", default_rate=Decimal("45.00"), gst_rate=Decimal("18.0"), is_active=True),
+            Product(product_code="PRD-CBK-001", name="Carbon Black", product_type="CARBON",
+                    unit="KG", default_rate=Decimal("18.00"), gst_rate=Decimal("18.0"), is_active=True),
+            Product(product_code="PRD-STL-001", name="Steel Scrap", product_type="STEEL",
+                    unit="KG", default_rate=Decimal("25.00"), gst_rate=Decimal("18.0"), is_active=True),
+        ]
+        for p in products:
+            db.add(p)
+        
+        # Reactors
+        reactors = [
+            Reactor(reactor_code="R1", name="Reactor Alpha", capacity_kg=Decimal("600"),
+                    status="IDLE", batches_since_last_cleaning=0, maintenance_frequency=3, is_active=True),
+            Reactor(reactor_code="R2", name="Reactor Beta", capacity_kg=Decimal("600"),
+                    status="IDLE", batches_since_last_cleaning=2, maintenance_frequency=3, is_active=True),
+        ]
+        for r in reactors:
+            db.add(r)
+        
+        # Storage Tank
+        tank = StorageTank(tank_code="TK-OIL-01", name="Main Oil Storage", tank_type="STORAGE",
+                           capacity_liters=Decimal("50000"), current_level_liters=Decimal("5000"), is_active=True)
+        db.add(tank)
+        
+        db.commit()
+        print("✅ Basic demo data seeded: 2 vendors, 2 customers, 3 products, 2 reactors, 1 tank")
     except Exception as e:
-        print(f"⚠️ Error running seed script: {e}")
-
-
+        print(f"⚠️ Error seeding demo data: {e}")
+        db.rollback()
