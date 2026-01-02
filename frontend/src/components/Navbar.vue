@@ -13,9 +13,9 @@
         <!-- User Menu -->
         <div class="relative">
           <div class="flex items-center">
-            <span class="hidden md:block text-sm font-medium text-gray-700 mr-2">Plant Operator</span>
+            <span class="hidden md:block text-sm font-medium text-gray-700 mr-2">{{ userDisplayRole }}</span>
             <div class="h-8 w-8 rounded-full bg-green-600 flex items-center justify-center">
-              <span class="text-white text-sm font-medium">PO</span>
+              <span class="text-white text-sm font-medium">{{ userInitial }}</span>
             </div>
           </div>
         </div>
@@ -31,6 +31,22 @@ import { useRoute } from 'vue-router'
 const route = useRoute()
 const currentTime = ref('')
 
+// Get user from localStorage
+const user = computed(() => JSON.parse(localStorage.getItem('user') || '{}'))
+const userRole = computed(() => user.value.role || 'GUEST')
+const userInitial = computed(() => (user.value.username || 'G')[0].toUpperCase())
+
+// Display role mapping
+const userDisplayRole = computed(() => {
+  const roleNames = {
+    'ADMIN': 'Administrator',
+    'MANAGER': 'Manager',
+    'OPERATOR': 'Plant Operator',
+    'VIEWER': 'Viewer'
+  }
+  return roleNames[userRole.value] || 'Guest'
+})
+
 const pageTitle = computed(() => {
   const titles = {
     '/': 'Dashboard',
@@ -39,7 +55,11 @@ const pageTitle = computed(() => {
     '/inward-entry': 'Inward Entry',
     '/grn': 'GRN Approvals',
     '/control-room': 'Production Control Room',
-    '/settings/recipes': 'Recipe Manager'
+    '/maintenance': 'Maintenance Hub',
+    '/sales': 'Sales & Dispatch',
+    '/reports': 'Analytics & Reports',
+    '/settings/recipes': 'Recipe Manager',
+    '/settings/users': 'User Management'
   }
   return titles[route.path] || 'Tyre Pyrolysis ERP'
 })
